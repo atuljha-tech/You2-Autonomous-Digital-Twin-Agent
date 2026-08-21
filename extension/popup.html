@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>You²</title>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    body{width:340px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;background:#0b0e14;color:#f8fafc;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    .header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(6,182,212,.08));border-bottom:1px solid rgba(255,255,255,.06)}
+    .logo-row{display:flex;align-items:center;gap:10px}
+    .logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;box-shadow:0 4px 12px rgba(139,92,246,.4)}
+    .header h1{font-size:15px;font-weight:800;letter-spacing:-.02em}
+    .header h1 span{color:#8b5cf6}
+    .vbadge{font-size:9px;font-weight:700;padding:3px 7px;background:rgba(139,92,246,.15);color:#a78bfa;border:1px solid rgba(139,92,246,.25);border-radius:20px}
+    .section{padding:14px 18px}
+    .section+.section{border-top:1px solid rgba(255,255,255,.05)}
+    .label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+    /* Mission card */
+    .mission-card{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+    .mission-title{font-size:13px;font-weight:700;color:#f8fafc;margin-bottom:4px;line-height:1.3}
+    .mission-meta{font-size:10px;color:rgba(255,255,255,.4);display:flex;gap:10px;flex-wrap:wrap}
+    .mission-bar{height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin-top:8px}
+    .mission-fill{height:100%;background:linear-gradient(90deg,#8b5cf6,#06b6d4);border-radius:4px;transition:width .8s ease}
+    /* Site card */
+    .site-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 14px;margin-bottom:10px}
+    .site-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .site-name{font-size:13px;font-weight:700;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+    .cat-badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:.03em;flex-shrink:0}
+    .cat-productive{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.25)}
+    .cat-distracting{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+    .cat-neutral{background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.2)}
+    .cat-sensitive{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+    .cat-unknown{background:rgba(148,163,184,.1);color:#64748b;border:1px solid rgba(148,163,184,.15)}
+    .score-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+    .score-row:last-child{margin-bottom:0}
+    .score-label{font-size:10px;color:rgba(255,255,255,.4);width:68px;flex-shrink:0}
+    .score-track{flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+    .score-fill{height:100%;border-radius:4px;transition:width .8s ease}
+    .fill-green{background:linear-gradient(90deg,#10b981,#34d399)}
+    .fill-red{background:linear-gradient(90deg,#f59e0b,#ef4444)}
+    .fill-gray{background:linear-gradient(90deg,#475569,#94a3b8)}
+    .score-num{font-size:10px;font-weight:700;width:28px;text-align:right;color:rgba(255,255,255,.5)}
+    /* Metrics */
+    .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+    .metric-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:10px;text-align:center}
+    .metric-card .val{font-size:18px;font-weight:900;margin-bottom:2px}
+    .metric-card .lbl{font-size:10px;color:rgba(255,255,255,.35);font-weight:600}
+    /* Status */
+    .status-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;font-size:12px;margin-bottom:8px}
+    .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}
+    .dot-green{background:#10b981;box-shadow:0 0 6px #10b981;animation:pulse-dot 2s infinite}
+    .dot-gray{background:#475569}
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+    /* Inputs */
+    input{width:100%;padding:11px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#f8fafc;font-size:13px;outline:none;transition:all .2s}
+    input:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+    input::placeholder{color:rgba(255,255,255,.25)}
+    /* Buttons */
+    button{width:100%;padding:11px;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:transform .1s,opacity .15s;margin-top:8px;font-family:inherit}
+    button:hover:not(:disabled){transform:translateY(-1px);opacity:.9}
+    button:active:not(:disabled){transform:translateY(0)}
+    button:disabled{opacity:.4;cursor:not-allowed}
+    .btn-primary{background:linear-gradient(135deg,#8b5cf6,#6366f1);color:white;box-shadow:0 4px 14px rgba(139,92,246,.35)}
+    .btn-green{background:linear-gradient(135deg,#10b981,#06b6d4);color:white;box-shadow:0 4px 14px rgba(16,185,129,.3)}
+    .btn-ghost{background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.1)}
+    .btn-danger{background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+    .btn-row{display:flex;gap:8px}
+    .btn-row button{flex:1}
+    .hidden{display:none!important}
+    .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:white;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+    @keyframes spin{100%{transform:rotate(360deg)}}
+    .footer{padding:10px 18px;text-align:center;font-size:10px;color:rgba(255,255,255,.2);border-top:1px solid rgba(255,255,255,.05)}
+    .hint{font-size:11px;color:rgba(255,255,255,.35);text-align:center;margin-top:10px;line-height:1.5}
+    .hint a{color:#8b5cf6;text-decoration:none;font-weight:600}
+    .sensitive-banner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:12px;padding:12px 14px;display:flex;align-items:flex-start;gap:10px}
+    .sensitive-banner .icon{font-size:18px;flex-shrink:0}
+    .sensitive-banner p{font-size:12px;color:#fbbf24;line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo-row">
+      <div class="logo">Y²</div>
+      <h1>You<span>²</span></h1>
+    </div>
+    <span class="vbadge">v3.0</span>
+  </div>
+
+  <!-- Setup -->
+  <div id="setup-section" class="section hidden">
+    <div class="label" style="text-align:center;margin-bottom:16px">Link Your Twin</div>
+    <input type="text" id="userIdInput" placeholder="Paste your You² User ID" autocomplete="off"/>
+    <button class="btn-green" id="connectBtn" style="margin-top:12px">Connect Account</button>
+    <p class="hint">Find your ID on the <a href="http://localhost:3000/dashboard" target="_blank">Dashboard</a> — click your name in the header</p>
+  </div>
+
+  <!-- Connected -->
+  <div id="connected-section" class="hidden">
+
+    <!-- Active Mission -->
+    <div class="section" style="padding-bottom:10px">
+      <div class="label">Active Mission</div>
+      <div id="mission-none" style="text-align:center;padding:12px 0;font-size:12px;color:rgba(255,255,255,.3)">
+        No active task — <a href="http://localhost:3000/tasks" target="_blank" style="color:#8b5cf6;text-decoration:none;font-weight:600">open tasks →</a>
+      </div>
+      <div id="mission-card" class="mission-card hidden">
+        <div class="mission-title" id="missionTitle">—</div>
+        <div class="mission-meta">
+          <span id="missionCat">—</span>
+          <span id="missionTime">—</span>
+          <span id="missionTimer" style="color:#10b981;font-weight:700">—</span>
+        </div>
+        <div class="mission-bar"><div class="mission-fill" id="missionFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Current Page -->
+    <div class="section" style="padding-top:10px;padding-bottom:10px">
+      <div class="label">Current Page</div>
+      <div id="sensitive-warning" class="sensitive-banner hidden" style="margin-bottom:10px">
+        <span class="icon">🔒</span>
+        <p>Sensitive page — tracking paused for privacy.</p>
+      </div>
+      <div id="site-card" class="site-card">
+        <div class="site-row">
+          <span class="site-name" id="siteNameEl">Loading…</span>
+          <span class="cat-badge cat-unknown" id="categoryBadge">—</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Productive</span>
+          <div class="score-track"><div class="score-fill fill-green" id="prodBar" style="width:0%"></div></div>
+          <span class="score-num" id="prodNum">0%</span>
+        </div>
+        <div class="score-row">
+          <span class="score-label">Distracting</span>
+          <div class="score-track"><div class="score-fill fill-red" id="distBar" style="width:0%"></div></div>
+          <span class="score-num" id="distNum">0%</span>
+        </div>
+      </div>
+      <div class="status-row">
+        <span><span class="dot dot-green"></span>Tracking active</span>
+        <span id="sessionTimer" style="font-size:11px;color:rgba(255,255,255,.4);font-weight:600">0s</span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="section" style="padding-top:10px;padding-bottom:10px">
+      <div class="label">Twin Stats</div>
+      <div id="loading-state" style="text-align:center;padding:12px 0;font-size:12px;color:rgba(255,255,255,.35)">
+        <span class="spinner"></span>Fetching…
+      </div>
+      <div id="user-metrics" class="hidden">
+        <div class="metric-grid">
+          <div class="metric-card"><div class="val" id="scoreEl" style="color:#10b981">—</div><div class="lbl">Score</div></div>
+          <div class="metric-card"><div class="val" id="goalsEl" style="color:#8b5cf6">—</div><div class="lbl">Goals</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section" style="padding-top:10px">
+      <button class="btn-primary" id="openMissionsBtn">⚡ Action Plan</button>
+      <button class="btn-ghost" id="openChatBtn" style="margin-top:6px">💬 Chat with Twin</button>
+      <div class="btn-row" style="margin-top:6px">
+        <button class="btn-ghost" id="openDashboardBtn">📊 Dashboard</button>
+        <button class="btn-danger" id="disconnectBtn">Exit</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">You² Digital Twin · Focus Agent v3.0</div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{
+  "manifest_version": 3,
+  "name": "You² — Digital Twin Agent",
+  "version": "2.0.0",
+  "description": "Your autonomous AI twin that intelligently tracks focus, detects distractions on any website, and nudges you back to your goals.",
+
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "storage",
+    "alarms"
+  ],
+
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "http://localhost:3000/*",
+    "<all_urls>"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16":  "icon16.png",
+      "48":  "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+
+  "icons": {
+    "16":  "icon16.png",
+    "48":  "icon48.png",
+    "128": "icon128.png"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
