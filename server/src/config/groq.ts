@@ -12,7 +12,7 @@ let pool: KeyState[] = [];
 let poolCursor = 0;
 let poolInitialized = false;
 
-const COOLDOWN_MS = 60_000; // 60 s cooldown before a rate-limited key is retried
+const COOLDOWN_MS = 3_000; // 3 s — Groq rate limits reset in ~2 s
 
 const initPool = () => {
   if (poolInitialized) return;
@@ -66,11 +66,11 @@ const markExhausted = (keyState: KeyState) => {
 
 // ─── Model Priority ───────────────────────────────────────────────────────────
 
-// Models tried in order per key — if one returns 404 we slide to the next
+// Models confirmed available on this Groq org — tried in order per key
 const MODEL_PRIORITY = [
-  'groq/compound-mini',
-  'groq/compound',
-  'qwen/qwen3.6-27b',
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+  'mixtral-8x7b-32768',
 ];
 
 // ─── Core Generation ──────────────────────────────────────────────────────────
@@ -124,6 +124,7 @@ export const generateWithFallback = async (prompt: string): Promise<string> => {
 
     const client = new Groq({ apiKey: keyState.key });
     let keyFailed = false;
+    let keyRateLimited = false;
 
     for (const model of MODEL_PRIORITY) {
       try {
@@ -136,21 +137,33 @@ export const generateWithFallback = async (prompt: string): Promise<string> => {
       } catch (err: any) {
         const status: number = err.status ?? err.statusCode ?? 0;
         const msg: string = err.message ?? '';
+        const msgLower = msg.toLowerCase();
 
-        if (status === 404 || msg.includes('not found') || msg.includes('decommissioned')) {
+        if (
+          status === 404 ||
+          (status === 400 && msgLower.includes('model')) ||
+          msgLower.includes('not found') ||
+          msgLower.includes('does not exist') ||
+          msgLower.includes('decommissioned')
+        ) {
           // Model unavailable on this key — try next model
           console.warn(`⚠️  Model "${model}" unavailable (key #${keyState.index}), trying next model…`);
           continue;
         }
 
+        if (status === 429 || msgLower.includes('rate limit') || msgLower.includes('quota')) {
+          // Single model rate limit — slide to next model first before abandoning key
+          console.warn(`⚠️  Model "${model}" rate-limited (key #${keyState.index}), sliding to next model…`);
+          keyRateLimited = true;
+          continue;
+        }
+
         if (
-          status === 429 || status === 403 || status === 401 ||
-          msg.toLowerCase().includes('quota') ||
-          msg.toLowerCase().includes('rate limit') ||
-          msg.toLowerCase().includes('api key') ||
-          msg.toLowerCase().includes('invalid key')
+          status === 403 || status === 401 ||
+          msgLower.includes('api key') ||
+          msgLower.includes('invalid key')
         ) {
-          // Key itself is the problem — mark exhausted and break to next key
+          // Key itself is bad/unauthorized — mark exhausted and break to next key
           markExhausted(keyState);
           keyFailed = true;
           break;
@@ -160,6 +173,11 @@ export const generateWithFallback = async (prompt: string): Promise<string> => {
         console.warn(`⚠️  Transient error on model "${model}" (key #${keyState.index}): ${msg}`);
         continue;
       }
+    }
+
+    if (!keyFailed && keyRateLimited) {
+      // All attempted models on this key were rate-limited in this pass.
+      markExhausted(keyState);
     }
 
     if (keyFailed) continue; // outer loop will pick the next healthy key

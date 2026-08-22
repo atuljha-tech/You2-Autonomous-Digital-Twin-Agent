@@ -18,6 +18,7 @@ export const chat = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Fresh read for prompt building only
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
@@ -33,22 +34,58 @@ export const chat = async (req: Request, res: Response): Promise<void> => {
     // Build prompt
     const prompt = buildChatPrompt(user, message, mode as ChatMode, recentHistory);
 
-    // Call Gemini with fallback
+    // Call Groq with key rotation & fallback
     const response = await generateWithFallback(prompt);
 
-    // Store interaction in history (Phase 4 - behavior tracking)
-    user.history.push({
+    // ─── Atomic update — avoids VersionError from concurrent saves ───────────
+    // Compute pattern updates without touching the stale `user` doc
+    const patternUpdates = computePatternUpdates(message, mode);
+
+    const historyEntry = {
       timestamp: new Date(),
-      type: 'chat',
+      type: 'chat' as const,
       input: message,
       output: response,
       mode: mode as ChatMode,
-    });
+    };
 
-    // Update behavior patterns based on mode usage
-    await updateBehaviorPatterns(user, message, mode);
+    // Build the update object
+    const update: any = {
+      $push: { history: historyEntry },
+    };
 
-    await user.save();
+    // Apply productivity score bump atomically
+    if (mode === 'action') {
+      update.$inc = { productivityScore: 2 };
+    }
+
+    // First do the history + score push
+    await User.findByIdAndUpdate(userId, update, { new: false });
+
+    // Handle behaviorPatterns atomically (upsert each pattern individually)
+    for (const pattern of patternUpdates) {
+      // Try to increment existing pattern
+      const patched = await User.findOneAndUpdate(
+        { _id: userId, 'behaviorPatterns.pattern': pattern },
+        {
+          $inc: { 'behaviorPatterns.$.frequency': 1 },
+          $set: { 'behaviorPatterns.$.lastOccurrence': new Date() },
+        }
+      );
+
+      if (!patched) {
+        // Pattern doesn't exist yet — push it
+        await User.findByIdAndUpdate(userId, {
+          $push: {
+            behaviorPatterns: {
+              pattern,
+              frequency: 1,
+              lastOccurrence: new Date(),
+            },
+          },
+        });
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -98,51 +135,28 @@ export const getChatHistory = async (req: Request, res: Response): Promise<void>
   }
 };
 
-// Phase 4 - Behavior pattern detection
-async function updateBehaviorPatterns(user: any, message: string, mode: string) {
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Returns the list of behavior pattern strings that should be incremented/added */
+function computePatternUpdates(message: string, mode: string): string[] {
   const lowerMsg = message.toLowerCase();
+  const patterns: string[] = [];
 
-  // Detect procrastination signals
   if (lowerMsg.includes('procrastinat') || lowerMsg.includes('lazy') || lowerMsg.includes('distract')) {
-    addOrUpdatePattern(user, 'Shows signs of procrastination');
+    patterns.push('Shows signs of procrastination');
   }
-
-  // Detect motivation seeking
   if (lowerMsg.includes('motivat') || lowerMsg.includes('help me') || lowerMsg.includes('stuck')) {
-    addOrUpdatePattern(user, 'Seeks external motivation');
+    patterns.push('Seeks external motivation');
   }
-
-  // Detect planning behavior
   if (mode === 'action' || lowerMsg.includes('plan') || lowerMsg.includes('schedule')) {
-    addOrUpdatePattern(user, 'Actively plans and organizes');
+    patterns.push('Actively plans and organizes');
   }
-
-  // Detect self-reflection
   if (mode === 'reflection' || lowerMsg.includes('why') || lowerMsg.includes('understand')) {
-    addOrUpdatePattern(user, 'Engages in self-reflection');
+    patterns.push('Engages in self-reflection');
   }
-
-  // Detect future thinking
   if (mode === 'simulation' || lowerMsg.includes('what if') || lowerMsg.includes('future')) {
-    addOrUpdatePattern(user, 'Thinks about future consequences');
+    patterns.push('Thinks about future consequences');
   }
 
-  // Update productivity score based on engagement
-  if (mode === 'action') {
-    user.productivityScore = Math.min(100, user.productivityScore + 2);
-  }
-}
-
-function addOrUpdatePattern(user: any, pattern: string) {
-  const existing = user.behaviorPatterns.find((p: any) => p.pattern === pattern);
-  if (existing) {
-    existing.frequency += 1;
-    existing.lastOccurrence = new Date();
-  } else {
-    user.behaviorPatterns.push({
-      pattern,
-      frequency: 1,
-      lastOccurrence: new Date(),
-    });
-  }
+  return patterns;
 }

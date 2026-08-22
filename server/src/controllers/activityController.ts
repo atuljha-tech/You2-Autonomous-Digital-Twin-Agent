@@ -42,75 +42,74 @@ export const logActivity = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const user = await User.findById(userId);
+    // Verify user exists (lean read — don't hold a stale doc)
+    const user = await User.findById(userId).lean();
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    // Determine if productive
     const isDistracting = DISTRACTING_SITES.some(d => site.includes(d));
     const isProductive = PRODUCTIVE_SITES.some(p => site.includes(p));
-    const productive = isProductive || (!isDistracting);
+    const productive = isProductive || !isDistracting;
 
-    // Save activity log
+    // Save the activity document (separate collection — no conflict)
     const activity = new Activity({
-      userId,
-      site,
-      duration,
+      userId, site, duration,
       timestamp: timestamp ? new Date(timestamp) : new Date(),
       productive,
     });
     await activity.save();
 
-    // Store in user history
-    user.history.push({
-      timestamp: new Date(),
-      type: 'activity',
-      input: `Visited ${site} for ${duration} seconds`,
-      output: productive ? 'Productive activity' : 'Distracting activity',
+    // ── Atomic push history entry ────────────────────────────────────────────
+    await User.findByIdAndUpdate(userId, {
+      $push: {
+        history: {
+          timestamp: new Date(),
+          type: 'activity',
+          input: `Visited ${site} for ${duration} seconds`,
+          output: productive ? 'Productive activity' : 'Distracting activity',
+        },
+      },
     });
 
-    // Update behavior patterns
-    if (isDistracting && duration > 300) { // > 5 minutes on distracting site
-      const existing = user.behaviorPatterns.find((p: any) => p.pattern === 'Gets distracted by entertainment sites');
-      if (existing) {
-        existing.frequency += 1;
-        existing.lastOccurrence = new Date();
-      } else {
-        user.behaviorPatterns.push({
-          pattern: 'Gets distracted by entertainment sites',
-          frequency: 1,
-          lastOccurrence: new Date(),
+    // ── Atomic score & pattern updates ───────────────────────────────────────
+    if (isDistracting && duration > 300) {
+      await User.findByIdAndUpdate(userId, { $inc: { productivityScore: -2 } });
+      const patched = await User.findOneAndUpdate(
+        { _id: userId, 'behaviorPatterns.pattern': 'Gets distracted by entertainment sites' },
+        { $inc: { 'behaviorPatterns.$.frequency': 1 }, $set: { 'behaviorPatterns.$.lastOccurrence': new Date() } }
+      );
+      if (!patched) {
+        await User.findByIdAndUpdate(userId, {
+          $push: { behaviorPatterns: { pattern: 'Gets distracted by entertainment sites', frequency: 1, lastOccurrence: new Date() } },
         });
       }
-      // Decrease productivity score slightly
-      user.productivityScore = Math.max(0, user.productivityScore - 2);
     }
 
     if (isProductive && duration > 300) {
-      const existing = user.behaviorPatterns.find((p: any) => p.pattern === 'Spends time on productive platforms');
-      if (existing) {
-        existing.frequency += 1;
-        existing.lastOccurrence = new Date();
-      } else {
-        user.behaviorPatterns.push({
-          pattern: 'Spends time on productive platforms',
-          frequency: 1,
-          lastOccurrence: new Date(),
+      await User.findByIdAndUpdate(userId, { $inc: { productivityScore: 1 } });
+      const patched = await User.findOneAndUpdate(
+        { _id: userId, 'behaviorPatterns.pattern': 'Spends time on productive platforms' },
+        { $inc: { 'behaviorPatterns.$.frequency': 1 }, $set: { 'behaviorPatterns.$.lastOccurrence': new Date() } }
+      );
+      if (!patched) {
+        await User.findByIdAndUpdate(userId, {
+          $push: { behaviorPatterns: { pattern: 'Spends time on productive platforms', frequency: 1, lastOccurrence: new Date() } },
         });
       }
-      user.productivityScore = Math.min(100, user.productivityScore + 1);
     }
 
-    await user.save();
-
-    // Generate AI nudge for distracting sites
+    // Generate AI nudge for distracting sites (uses a lean snapshot — no save needed)
     let nudge = null;
-    if (isDistracting && duration > 120) { // > 2 minutes
+    if (isDistracting && duration > 120) {
       try {
-        const prompt = buildActivityAnalysisPrompt(user, site, Math.floor(duration / 60));
-        nudge = await generateWithFallback(prompt);
+        // Re-read fresh for prompt context
+        const freshUser = await User.findById(userId).lean();
+        if (freshUser) {
+          const prompt = buildActivityAnalysisPrompt(freshUser as any, site, Math.floor(duration / 60));
+          nudge = await generateWithFallback(prompt);
+        }
       } catch (err) {
         console.error('Failed to generate nudge:', err);
       }
@@ -135,30 +134,31 @@ export const logActivityBatch = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
+    const exists = await User.findById(userId).lean();
+    if (!exists) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
     let totalDistractedTime = 0;
-    
+    const historyEntries: any[] = [];
+
     for (const act of activities) {
       const { site, duration, timestamp } = act;
       const isDistracting = DISTRACTING_SITES.some(d => site.includes(d));
       const isProductive = PRODUCTIVE_SITES.some(p => site.includes(p));
-      const productive = isProductive || (!isDistracting);
+      const productive = isProductive || !isDistracting;
 
-      const activity = new Activity({
+      // Save activity document (separate collection)
+      await new Activity({
         userId, site, duration,
         timestamp: timestamp ? new Date(timestamp) : new Date(),
         productive,
-      });
-      await activity.save();
+      }).save();
 
       if (isDistracting) totalDistractedTime += duration;
 
-      user.history.push({
+      historyEntries.push({
         timestamp: new Date(),
         type: 'activity',
         input: site,
@@ -166,12 +166,16 @@ export const logActivityBatch = async (req: Request, res: Response): Promise<voi
       });
     }
 
-    if (totalDistractedTime > 300) {
-      user.productivityScore = Math.max(0, user.productivityScore - Math.floor(totalDistractedTime / 300));
-    } else {
-      user.productivityScore = Math.min(100, user.productivityScore + 1);
-    }
-    await user.save();
+    // ── Atomic: push all history entries at once ─────────────────────────────
+    await User.findByIdAndUpdate(userId, {
+      $push: { history: { $each: historyEntries } },
+    });
+
+    // ── Atomic: adjust productivity score ────────────────────────────────────
+    const scoreDelta = totalDistractedTime > 300
+      ? -Math.floor(totalDistractedTime / 300)
+      : 1;
+    await User.findByIdAndUpdate(userId, { $inc: { productivityScore: scoreDelta } });
 
     res.status(200).json({ success: true, processed: activities.length });
   } catch (error) {

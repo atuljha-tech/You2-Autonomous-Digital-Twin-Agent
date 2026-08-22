@@ -92,10 +92,13 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const startServer = async () => {
-  await connectDatabase();
   app.listen(PORT, () => {
     console.log(`🚀 You² server running on http://localhost:${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+
+  connectDatabase().catch(err => {
+    console.error('⚠️ DB connection delayed:', err.message || err);
   });
 };
 

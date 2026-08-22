@@ -51,7 +51,7 @@ export default function TasksPage() {
       setRawPlan(data.rawResponse); setShowPlan(true);
       await fetchTasks(userId); setRequest('');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to generate tasks. Check your Gemini API key.');
+      setError(err.response?.data?.error || 'Failed to generate tasks. Check your Groq API key.');
     } finally { setGenerating(false); }
   };
 
