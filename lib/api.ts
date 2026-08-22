@@ -13,7 +13,13 @@ api.interceptors.response.use(
   res => res,
   err => {
     const message = err.response?.data?.error || err.message || 'Network error';
-    console.error(`[You²API] ${err.config?.url} → ${message}`);
+    if (err.response) {
+      // Server responded with a non-2xx status — real API error
+      console.error(`[You²API] ${err.config?.url} → ${err.response.status} ${message}`);
+    } else {
+      // No response at all — server likely not running or CORS/network issue
+      console.warn(`[You²API] ${err.config?.url} → ${message} (server unreachable?)`);
+    }
     return Promise.reject(err);
   }
 );

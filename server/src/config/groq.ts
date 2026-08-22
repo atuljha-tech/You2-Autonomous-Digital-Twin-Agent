@@ -37,7 +37,7 @@ const MODEL_PRIORITY = [
   'qwen/qwen3.6-27b',
 ];
 
-export const generateWithFallback = async (prompt: string, maxKeyRetries = keys.length || 1): Promise<string> => {
+export const generateWithFallback = async (prompt: string, _maxKeyRetries?: number): Promise<string> => {
   if (process.env.DEMO_MODE === 'true') {
      console.log('⚡ DEMO_MODE Active: Intercepting generation call.');
      return getDemoResponse(prompt);
@@ -47,6 +47,8 @@ export const generateWithFallback = async (prompt: string, maxKeyRetries = keys.
   let keyAttempts = 0;
 
   initKeys();
+  // Must be computed AFTER initKeys() — keys.length is 0 before that
+  const maxKeyRetries = _maxKeyRetries ?? (keys.length || 1);
 
   while (keyAttempts < maxKeyRetries) {
     const client = getGroqClient();
