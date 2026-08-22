@@ -94,14 +94,19 @@ End with a short personal motivational note using their name.`
 
   activityLogs.forEach(a => {
     try {
-      const data = JSON.parse(a.output || '{}');
-      const site = data.site || a.input;
-      const dur = data.duration || 0;
-      if (site) {
-        siteTimes[site] = (siteTimes[site] || 0) + dur;
-        totalScreenTime += dur;
-        if (data.productive) totalFocus += dur;
-        else totalDistract += dur;
+      if (a.output && a.output.startsWith('{')) {
+        const data = JSON.parse(a.output);
+        const site = data.site || a.input;
+        const dur = Number(data.duration) || 0;
+        if (site) {
+          siteTimes[site] = (siteTimes[site] || 0) + dur;
+          totalScreenTime += dur;
+          if (data.productive) totalFocus += dur;
+          else totalDistract += dur;
+        }
+      } else if (a.input) {
+        const site = a.input.replace(/^Visited\s+/, '').split(' ')[0];
+        if (site) siteTimes[site] = (siteTimes[site] || 0) + 60;
       }
     } catch {}
   });
@@ -109,7 +114,7 @@ End with a short personal motivational note using their name.`
   const sortedSites = Object.entries(siteTimes)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 6)
-    .map(([site, s]) => `${site}: ${Math.round(s / 60)}m`)
+    .map(([site, s]) => `${site}: ${Math.max(1, Math.round(s / 60))}m`)
     .join(', ');
 
   const fmtMins = (secs: number) => `${Math.floor(secs / 60)}m`;

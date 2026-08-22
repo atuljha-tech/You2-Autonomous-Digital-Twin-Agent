@@ -23,12 +23,13 @@ It doesn't just track time; it understands context, intent, and your personal ps
 - **🙋 Personalized Twin Experience**: Extension & Web App greeting *"Hey, Atul 👋"* with live Archetype status (*"Neural Strategist • Deep Focus Mode"*).
 - **📱 Expanded & Informative Popup**: Roomy 460px × 600px popup UI displaying live Focus Scores, domain impact explanations, and agentic quick controls.
 - **👁️ Real-Time Distraction Detection**: Categorizes sites locally and calculates real-time productivity percentages.
-- **⚡ 15-Second Intent Check Intervention**: Halts distraction visits with a 15-second countdown prompt requiring justification or auto-closing the tab.
+- **⚡ 20-Second Intent Check Intervention**: Halts distraction visits within 1 second with a 20-second countdown prompt requiring justification or auto-closing the tab.
+- **🗣️ Live Activity-Aware AI Chat**: Ask your Digital Twin *"How long was I on YouTube today?"* or *"What are my top sites?"* and get real-time answers based on your actual tracked database metrics.
 - **🎯 One-Click Context Switcher (WebCMD)**: Instantly opens LeetCode + Notion in a styled Chrome Tab Group, mutes noisy tabs (Gmail, Discord, YouTube), and pre-loads solution templates into the clipboard.
 - **🧹 Auto-Save & Tab Stash Agent**: Archives idle, unpinned tabs into local memory with AI summaries and captures session snapshots under tagged sprints.
 - **⚡ Compound AI & Multi-Key Fallback**: Fallback rotation across 4 Groq API keys and multi-model priority list (`groq/compound-mini`, `groq/compound`, `qwen/qwen3.6-27b`) so AI tasks never crash or stall.
 - **📊 Activity Intelligence & Fixed Layouts**: Full analytics page (`/insights`) with daily breakdown bar charts, focus time split pie charts, top-visited domain stats, and overlapping-free layout structure.
-- **🎨 Modern Dark Aesthetic**: Custom liquid-glass interface, vibrant neon accents, and a enlarged bold neural-network custom cursor.
+- **🎨 Modern Dark Aesthetic**: Custom liquid-glass interface, vibrant neon accents, and an enlarged bold neural-network custom cursor.
 
 ---
 
