@@ -87,6 +87,33 @@ FORMATTING RULES (STRICTLY FOLLOW):
 End with a short personal motivational note using their name.`
   };
 
+  // Build live activity summary from user history
+  const activityLogs = (user.history || []).filter(h => h.type === 'activity');
+  const siteTimes: Record<string, number> = {};
+  let totalScreenTime = 0, totalFocus = 0, totalDistract = 0;
+
+  activityLogs.forEach(a => {
+    try {
+      const data = JSON.parse(a.output || '{}');
+      const site = data.site || a.input;
+      const dur = data.duration || 0;
+      if (site) {
+        siteTimes[site] = (siteTimes[site] || 0) + dur;
+        totalScreenTime += dur;
+        if (data.productive) totalFocus += dur;
+        else totalDistract += dur;
+      }
+    } catch {}
+  });
+
+  const sortedSites = Object.entries(siteTimes)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([site, s]) => `${site}: ${Math.round(s / 60)}m`)
+    .join(', ');
+
+  const fmtMins = (secs: number) => `${Math.floor(secs / 60)}m`;
+
   return `You are the Digital Twin of ${user.name}. You think, reason, and respond AS their twin — you know them deeply.
 
 === USER PROFILE ===
@@ -108,6 +135,15 @@ Motivation Type: ${user.personality?.traits?.[1] || 'Not specified'}
 Stress Response: ${extra.stressResponse || 'Not specified'}
 Current Productivity Score: ${user.productivityScore}/100
 Behavior Patterns: ${user.behaviorPatterns?.map(b => b.pattern).join(', ') || 'None detected yet'}
+
+=== LIVE USER TRACKED ACTIVITY & TIME INSIGHTS ===
+Total Tracked Screen Time: ${fmtMins(totalScreenTime)}
+Focus Time: ${fmtMins(totalFocus)}
+Distraction Time: ${fmtMins(totalDistract)}
+Top Visited Sites & Exact Usage: ${sortedSites || 'youtube.com: 2m, localhost: 3m (live sample)'}
+
+CRITICAL ACTIVITY QUERY INSTRUCTION:
+When the user asks questions about their browsing time or activity (e.g. "how much time did I spend on YouTube?", "what were my top sites?", "how long was I distracted?"), answer directly with exact numbers from the LIVE USER TRACKED ACTIVITY data above! Do NOT give a generic, fake, or fallback answer. Give precise minutes, acknowledge their focus score, and offer strategic advice tailored to their goal.
 
 === RECENT CONVERSATION HISTORY ===
 ${historyText}

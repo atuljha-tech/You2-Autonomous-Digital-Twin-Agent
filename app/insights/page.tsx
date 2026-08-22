@@ -164,64 +164,72 @@ export default function InsightsPage() {
             <div className="grid md:grid-cols-3 gap-6 mb-6">
 
               {/* Bar Chart — Daily Breakdown */}
-              <div className="md:col-span-2 glass-card rounded-2xl p-6 border" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Daily Activity Breakdown</h2>
-                  <div className="flex gap-4 text-xs">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[var(--green)]"></span>Productive</span>
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[var(--red)]"></span>Distracting</span>
+              <div className="md:col-span-2 glass-card rounded-2xl p-6 border flex flex-col justify-between" style={{ borderColor: 'var(--border-color)' }}>
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Daily Activity Breakdown</h2>
+                    <div className="flex gap-4 text-xs">
+                      <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[var(--green)]"></span>Productive</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[var(--red)]"></span>Distracting</span>
+                    </div>
                   </div>
+                  {chartData.length > 0 ? (
+                    <div className="w-full h-64 pt-2">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} barSize={16} barGap={6}>
+                          <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+                          <YAxis hide />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Bar dataKey="Productive" fill="var(--green)" radius={[4,4,0,0]} />
+                          <Bar dataKey="Distracting" fill="var(--red)" radius={[4,4,0,0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-56 flex flex-col items-center justify-center gap-3" style={{ color: 'var(--text-muted)' }}>
+                      <span className="text-4xl">📡</span>
+                      <span className="text-sm">No data yet — install the Extension and browse a bit!</span>
+                    </div>
+                  )}
                 </div>
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={chartData} barSize={10} barGap={3}>
-                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="Productive" fill="var(--green)" radius={[4,4,0,0]} />
-                      <Bar dataKey="Distracting" fill="var(--red)" radius={[4,4,0,0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-48 flex flex-col items-center justify-center gap-3" style={{ color: 'var(--text-muted)' }}>
-                    <span className="text-4xl">📡</span>
-                    <span className="text-sm">No data yet — install the Extension and browse a bit!</span>
-                  </div>
-                )}
               </div>
 
               {/* Pie Chart — Focus Split */}
-              <div className="glass-card rounded-2xl p-6 border flex flex-col" style={{ borderColor: 'var(--border-color)' }}>
-                <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Time Split</h2>
-                {pieData.length > 0 && (pieData[0].value > 0 || pieData[1].value > 0) ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={160}>
-                      <PieChart>
-                        <Pie data={pieData} dataKey="value" innerRadius={50} outerRadius={75} paddingAngle={3}>
-                          {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                        </Pie>
-                        <Tooltip formatter={(v: any) => fmtTime(v)} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="flex justify-center gap-5 mt-3">
-                      {pieData.map((p, i) => (
-                        <div key={i} className="flex items-center gap-1.5 text-xs">
-                          <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.fill }}></span>
-                          <span style={{ color: 'var(--text-secondary)' }}>{p.name}</span>
-                        </div>
-                      ))}
+              <div className="glass-card rounded-2xl p-6 border flex flex-col justify-between" style={{ borderColor: 'var(--border-color)' }}>
+                <div>
+                  <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--text-primary)' }}>Time Split</h2>
+                  {pieData.length > 0 && (pieData[0].value > 0 || pieData[1].value > 0) ? (
+                    <>
+                      <div className="w-full h-44">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={pieData} dataKey="value" innerRadius={48} outerRadius={70} paddingAngle={4}>
+                              {pieData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                            </Pie>
+                            <Tooltip formatter={(v: any) => fmtTime(v)} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex justify-center gap-5 mt-2">
+                        {pieData.map((p, i) => (
+                          <div key={i} className="flex items-center gap-1.5 text-xs font-semibold">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.fill }}></span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{p.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center gap-2 py-8" style={{ color: 'var(--text-muted)' }}>
+                      <span className="text-3xl">🥧</span>
+                      <span className="text-xs text-center">No split data yet</span>
                     </div>
-                  </>
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center gap-2" style={{ color: 'var(--text-muted)' }}>
-                    <span className="text-3xl">🥧</span>
-                    <span className="text-xs text-center">No split data yet</span>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Productivity ratio bar */}
                 {(stats?.totalTime || 0) > 0 && (
-                  <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <div className="mt-4 pt-3 border-t" style={{ borderColor: 'var(--border-color)' }}>
                     <div className="flex justify-between text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
                       <span>Productivity Ratio</span>
                       <span className="font-bold" style={{ color: 'var(--green)' }}>{stats.productivityRatio}%</span>
@@ -246,13 +254,13 @@ export default function InsightsPage() {
                 {topSites.length > 0 ? (
                   <div className="space-y-4">
                     {topSites.map((s: any, i: number) => {
-                      const pct = maxSiteTime > 0 ? (s.duration / maxSiteTime) * 100 : 0;
+                      const pct = maxSiteTime > 0 ? Math.min(100, Math.max(8, (s.duration / maxSiteTime) * 100)) : 0;
                       const distract = isDistracting(s.site);
                       const barColor = distract ? 'var(--red)' : 'var(--green)';
                       return (
                         <div key={i} className="space-y-1.5">
                           <div className="flex items-center gap-3">
-                            <div className="relative w-6 h-6 rounded-md overflow-hidden bg-[var(--surface2)] flex-shrink-0">
+                            <div className="relative w-6 h-6 rounded-md overflow-hidden bg-[var(--surface2)] flex-shrink-0 flex items-center justify-center">
                               <img
                                 src={FAVICON(s.site)}
                                 alt={s.site}
@@ -264,16 +272,16 @@ export default function InsightsPage() {
                               {s.site.replace('www.', '')}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold`}
-                                  style={{ background: distract ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)', color: distract ? 'var(--red)' : 'var(--green)' }}>
+                                  style={{ background: distract ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)', color: distract ? 'var(--red)' : 'var(--green)' }}>
                               {distract ? 'Distract' : 'Focus'}
                             </span>
                             <span className="text-xs font-bold tabular-nums" style={{ color: 'var(--text-secondary)' }}>
                               {fmtTime(s.duration)}
                             </span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full overflow-hidden ml-9" style={{ background: 'var(--surface2)' }}>
+                          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--surface2)' }}>
                             <div className="h-full rounded-full transition-all duration-700"
-                                 style={{ width: `${pct}%`, background: barColor, animationDelay: `${i * 0.1}s` }} />
+                                 style={{ width: `${pct}%`, background: barColor }} />
                           </div>
                         </div>
                       );

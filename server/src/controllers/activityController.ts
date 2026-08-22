@@ -161,8 +161,8 @@ export const logActivityBatch = async (req: Request, res: Response): Promise<voi
       user.history.push({
         timestamp: new Date(),
         type: 'activity',
-        input: `Visited ${site} for ${duration} seconds`,
-        output: productive ? 'Productive activity' : 'Distracting activity',
+        input: site,
+        output: JSON.stringify({ site, duration, productive }),
       });
     }
 

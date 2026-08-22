@@ -21,11 +21,26 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const id = localStorage.getItem('you2_user_id') || localStorage.getItem('you2_user_id');
+    const id = localStorage.getItem('you2_user_id');
     if (!id) { router.push('/create-twin'); return; }
     setUserId(id);
+
+    // 1. First load from local storage cache for immediate rendering
     const saved = localStorage.getItem(`you2_generic_chat_${id}`);
     if (saved) { try { setMessages(JSON.parse(saved)); } catch {} }
+
+    // 2. Fetch official history from DB
+    chatAPI.getHistory(id).then(res => {
+      if (res.history && res.history.length > 0) {
+        const dbMsgs: Message[] = [];
+        res.history.reverse().forEach((h: any) => {
+          if (h.input) dbMsgs.push({ role: 'user', content: h.input, timestamp: h.timestamp || new Date().toISOString() });
+          if (h.output) dbMsgs.push({ role: 'ai', content: h.output, timestamp: h.timestamp || new Date().toISOString() });
+        });
+        setMessages(dbMsgs);
+        localStorage.setItem(`you2_generic_chat_${id}`, JSON.stringify(dbMsgs.slice(-60)));
+      }
+    }).catch(() => {});
   }, [router]);
 
   useEffect(() => {

@@ -147,12 +147,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (streakEl) streakEl.textContent = `${user.history?.length || 0}`;
 
       const twinNameEl = document.getElementById('twinUserName');
-      if (twinNameEl) twinNameEl.textContent = `${user.name || 'User'}'s Twin`;
+      if (twinNameEl) {
+        const name = user.name || 'Atul';
+        twinNameEl.textContent = `Hey, ${name} 👋`;
+      }
 
       const archetypeEl = document.getElementById('twinArchetype');
       if (archetypeEl) {
-        const archetype = user.archetype || 'Neural Explorer';
-        archetypeEl.textContent = `⚡ Archetype: ${archetype}`;
+        const archetype = user.archetype || 'Neural Strategist';
+        archetypeEl.textContent = `⚡ Twin: ${archetype} • Deep Focus Mode`;
       }
 
       if (loadingState) loadingState.classList.add('hidden'); 
