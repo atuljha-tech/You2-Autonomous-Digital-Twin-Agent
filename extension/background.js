@@ -161,6 +161,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     flushQueue().then(() => sendResponse({ ok: true }));
     return true;
   }
+  if (request.action === 'switchContext') {
+    handleContextSwitch(request.contextType || 'dsa').then(res => sendResponse(res));
+    return true;
+  }
+  if (request.action === 'stashIdleTabs') {
+    handleStashIdleTabs().then(res => sendResponse(res));
+    return true;
+  }
+  if (request.action === 'createSessionSnapshot') {
+    handleSessionSnapshot(request.tag || 'Focus Session').then(res => sendResponse(res));
+    return true;
+  }
   if (request.action === 'closeTab') {
     const tabId = sender?.tab?.id;
     if (tabId) {
@@ -170,5 +182,92 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+// ─── AGENTIC EXTENSION FEATURES ──────────────────────────────────────────────
+
+// Feature 1: One-Click Context Switcher & Auto-Prep
+async function handleContextSwitch(contextType) {
+  const PRESET_MAP = {
+    dsa: {
+      title: '🎯 DSA Prep Session',
+      urls: ['https://leetcode.com/problemset/', 'https://notion.so'],
+      snippet: '// Solution Template\nfunction solve(input) {\n  // 1. Edge cases\n  if (!input) return null;\n  // 2. Main Logic\n}\n'
+    },
+    webdev: {
+      title: '💻 Web Dev Sprint',
+      urls: ['http://localhost:3000', 'https://github.com'],
+      snippet: 'git checkout -b feature/sprint && npm run dev'
+    },
+    research: {
+      title: '📚 Research & Reading',
+      urls: ['https://arxiv.org', 'https://scholar.google.com'],
+      snippet: 'Key Takeaways:\n- Core thesis:\n- Methodology:\n- Limitations:'
+    }
+  };
+
+  const preset = PRESET_MAP[contextType] || PRESET_MAP.dsa;
+
+  // 1. Mute noisy notification tabs (e.g., mail/discord/youtube)
+  const tabs = await chrome.tabs.query({});
+  for (const t of tabs) {
+    if (t.url && (t.url.includes('mail.google') || t.url.includes('discord.com') || t.url.includes('youtube.com'))) {
+      try { await chrome.tabs.update(t.id, { muted: true }); } catch {}
+    }
+  }
+
+  // 2. Open context URLs and Create Tab Group if supported
+  const tabIds = [];
+  for (const url of preset.urls) {
+    const newTab = await chrome.tabs.create({ url, active: false });
+    if (newTab.id) tabIds.push(newTab.id);
+  }
+
+  if (chrome.tabGroups && tabIds.length > 0) {
+    try {
+      const groupId = await chrome.tabGroups.group({ tabIds });
+      await chrome.tabGroups.update(groupId, { title: preset.title, color: 'purple', collapsed: false });
+    } catch (e) {
+      console.log('Tab grouping fallback:', e);
+    }
+  }
+
+  return { success: true, preset: preset.title, snippet: preset.snippet };
+}
+
+// Feature 3: Auto-Save & Clean Up Agent (Stash tabs & Session Snapshot)
+async function handleStashIdleTabs() {
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  const stashed = [];
+
+  for (const t of tabs) {
+    if (!t.active && !t.pinned && t.url?.startsWith('http')) {
+      const hostname = new URL(t.url).hostname;
+      const isDistraction = SENSITIVE_KEYWORDS.some(k => t.url.includes(k)) === false;
+      if (isDistraction) {
+        stashed.push({ title: t.title || hostname, url: t.url, timestamp: new Date().toLocaleTimeString() });
+        try { await chrome.tabs.remove(t.id); } catch {}
+      }
+    }
+  }
+
+  const existing = await new Promise(r => chrome.storage.local.get(['stashedTabs'], d => r(d.stashedTabs || [])));
+  const updated = [...stashed, ...existing];
+  await chrome.storage.local.set({ stashedTabs: updated });
+
+  return { success: true, count: stashed.length };
+}
+
+async function handleSessionSnapshot(tag) {
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  const snapshot = tabs
+    .filter(t => t.url?.startsWith('http'))
+    .map(t => ({ title: t.title, url: t.url }));
+
+  const existing = await new Promise(r => chrome.storage.local.get(['sessionSnapshots'], d => r(d.sessionSnapshots || [])));
+  const newEntry = { id: Date.now().toString(), tag, date: new Date().toLocaleString(), tabs: snapshot };
+  await chrome.storage.local.set({ sessionSnapshots: [newEntry, ...existing] });
+
+  return { success: true, snapshotCount: snapshot.length };
+}
 
 console.log('🧠 You² background worker started');

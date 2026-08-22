@@ -163,6 +163,81 @@ function showLevel1(domain) {
   setTimeout(dismiss, 15000);
 }
 
+// ─── Smart Friction Creator (Micro-Obstacles) ──────────────────────────────────
+function checkSmartFrictionGatekeeper(domain) {
+  const isUnlocked = sessionStorage.getItem(`${YOU2}_unlocked_${domain}`);
+  if (isUnlocked === 'true') return false;
+
+  injectStyles();
+  const el = document.createElement('div');
+  el.id = `${YOU2}-friction-gate`;
+  Object.assign(el.style, {
+    position:'fixed', inset:'0', width:'100vw', height:'100vh',
+    background:'rgba(11, 14, 20, 0.95)', backdropFilter:'blur(20px)',
+    zIndex:'2147483647', display:'flex', alignItems:'center', justifyContent:'center',
+    color:'#f8fafc', fontFamily:'-apple-system,BlinkMacSystemFont,sans-serif'
+  });
+
+  const statement = "I am sacrificing 30 minutes of project work right now.";
+  const qA = { q: "What is 14 × 6 - 8?", a: "76" };
+
+  el.innerHTML = `
+    <div style="background:#151923;border:1px solid rgba(239,68,68,0.4);border-radius:24px;padding:32px;width:440px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.8)">
+      <div style="font-size:36px;margin-bottom:12px">🛑</div>
+      <h2 style="font-size:20px;font-weight:800;color:#f87171;margin-bottom:8px">Mindful Gatekeeper Active</h2>
+      <p style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:20px">
+        You are attempting to access <strong style="color:white">${domain}</strong>. Solve the micro-challenge to unlock access.
+      </p>
+
+      <div style="text-align:left;background:rgba(255,255,255,0.04);padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:16px">
+        <label style="font-size:11px;font-weight:700;color:#a78bfa;display:block;margin-bottom:6px">1. TYPE COMMITMENT STATEMENT (Click to autofill):</label>
+        <div id="${YOU2}-quote-hint" style="font-size:12px;font-style:italic;color:#c084fc;margin-bottom:8px;cursor:pointer;padding:4px;border-radius:6px;background:rgba(167,139,250,0.1)">"${statement}"</div>
+        <input id="${YOU2}-statement-input" type="text" placeholder="Type exact statement..." style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:white;font-size:12px;outline:none"/>
+      </div>
+
+      <div style="text-align:left;background:rgba(255,255,255,0.04);padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);margin-bottom:20px">
+        <label style="font-size:11px;font-weight:700;color:#06b6d4;display:block;margin-bottom:6px">2. QUICK FOCUS QUIZ:</label>
+        <div style="font-size:13px;font-weight:700;color:white;margin-bottom:8px">${qA.q}</div>
+        <input id="${YOU2}-quiz-input" type="text" placeholder="Your answer..." style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:white;font-size:12px;outline:none"/>
+      </div>
+
+      <div id="${YOU2}-gate-error" style="font-size:12px;color:#f87171;display:none;margin-bottom:12px">⚠️ Answer or statement does not match!</div>
+
+      <div style="display:flex;gap:10px">
+        <button id="${YOU2}-gate-back" style="flex:1;padding:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:white;border-radius:12px;font-weight:700;cursor:pointer">Back to Focus</button>
+        <button id="${YOU2}-gate-unlock" style="flex:1;padding:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);border:none;color:white;border-radius:12px;font-weight:700;cursor:pointer">Unlock Tab</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(el);
+
+  document.getElementById(`${YOU2}-quote-hint`).onclick = () => {
+    document.getElementById(`${YOU2}-statement-input`).value = statement;
+  };
+
+  document.getElementById(`${YOU2}-gate-back`).onclick = () => {
+    window.location.href = 'http://localhost:3000/tasks';
+  };
+
+  document.getElementById(`${YOU2}-gate-unlock`).onclick = () => {
+    const stmtVal = document.getElementById(`${YOU2}-statement-input`).value.trim();
+    const quizVal = document.getElementById(`${YOU2}-quiz-input`).value.trim();
+    const errorEl = document.getElementById(`${YOU2}-gate-error`);
+
+    const normalize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (normalize(stmtVal) === normalize(statement) && quizVal === qA.a) {
+      sessionStorage.setItem(`${YOU2}_unlocked_${domain}`, 'true');
+      el.remove();
+    } else {
+      errorEl.style.display = 'block';
+    }
+  };
+
+  return true;
+}
+
 // ─── Level 2: Stronger Alert (30 min) ────────────────────────────────────────
 function showLevel2(domain) {
   document.getElementById(`${YOU2}-nudge`)?.remove();
@@ -400,6 +475,9 @@ function scheduleEscalation(analysis) {
   if (analysis.category !== 'distracting') return;
 
   const domain = analysis.domain;
+
+  // Smart Friction Gatekeeper check
+  checkSmartFrictionGatekeeper(domain);
 
   // Immediate intent check with 15s countdown
   escalationTimer = setTimeout(() => {

@@ -5,24 +5,24 @@
   <title>You² — Focus Companion</title>
   <style>
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-    body{width:380px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;background:#0b0e14;color:#f8fafc;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-    .header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(6,182,212,.12));border-bottom:1px solid rgba(255,255,255,.08)}
-    .logo-row{display:flex;align-items:center;gap:12px}
-    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;box-shadow:0 4px 14px rgba(139,92,246,.45)}
-    .header h1{font-size:16px;font-weight:800;letter-spacing:-.02em}
-    .header h1 span{color:#8b5cf6}
-    .header p{font-size:11px;color:rgba(255,255,255,.5);font-weight:500}
-    .vbadge{font-size:10px;font-weight:700;padding:4px 9px;background:rgba(139,92,246,.2);color:#c084fc;border:1px solid rgba(139,92,246,.3);border-radius:20px}
-    .section{padding:16px 20px}
-    .section+.section{border-top:1px solid rgba(255,255,255,.06)}
-    .label{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+    body{width:420px;min-height:540px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Inter',sans-serif;background:#0b0e14;color:#f8fafc;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+    .header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(6,182,212,.15));border-bottom:1px solid rgba(255,255,255,.1)}
+    .logo-row{display:flex;align-items:center;gap:14px}
+    .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#8b5cf6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white;box-shadow:0 4px 16px rgba(139,92,246,.5)}
+    .header h1{font-size:18px;font-weight:800;letter-spacing:-.02em}
+    .header h1 span{color:#a78bfa}
+    .header p{font-size:12px;color:rgba(255,255,255,.6);font-weight:500;margin-top:1px}
+    .vbadge{font-size:11px;font-weight:700;padding:5px 12px;background:rgba(139,92,246,.25);color:#c084fc;border:1px solid rgba(139,92,246,.4);border-radius:20px}
+    .section{padding:18px 22px}
+    .section+.section{border-top:1px solid rgba(255,255,255,.07)}
+    .label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
     
     /* User twin profile banner */
-    .twin-profile{background:linear-gradient(135deg,rgba(255,255,255,.05),rgba(139,92,246,.08));border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
-    .twin-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 12px rgba(16,185,129,.3);flex-shrink:0}
+    .twin-profile{background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(139,92,246,.12));border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+    .twin-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#10b981,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 16px rgba(16,185,129,.4);flex-shrink:0}
     .twin-info{flex:1;min-width:0}
-    .twin-name{font-size:14px;font-weight:800;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .twin-status{font-size:11px;color:#a78bfa;font-weight:600;margin-top:2px}
+    .twin-name{font-size:16px;font-weight:800;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .twin-status{font-size:12px;color:#c084fc;font-weight:700;margin-top:3px}
 
     /* Mission card */
     .mission-card{background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:14px;padding:14px;margin-bottom:10px}
@@ -189,6 +189,17 @@
           <div class="metric-card"><div class="val" id="streakEl" style="color:#06b6d4">—</div><div class="lbl">Interactions</div></div>
         </div>
       </div>
+    </div>
+
+    <!-- Agentic Quick Controls -->
+    <div class="section" style="padding-top:10px;padding-bottom:10px">
+      <div class="label">Autonomous Quick Actions</div>
+      <div class="btn-row" style="margin-top:4px">
+        <button class="btn-green" id="switchContextDsaBtn" style="font-size:11px;padding:8px">🎯 DSA Mode</button>
+        <button class="btn-ghost" id="stashTabsBtn" style="font-size:11px;padding:8px">🧹 Stash Idle</button>
+        <button class="btn-ghost" id="saveSnapshotBtn" style="font-size:11px;padding:8px">📸 Snapshot</button>
+      </div>
+      <div id="agenticStatus" style="font-size:10px;color:#a78bfa;text-align:center;margin-top:6px;display:none"></div>
     </div>
 
     <!-- Actions -->

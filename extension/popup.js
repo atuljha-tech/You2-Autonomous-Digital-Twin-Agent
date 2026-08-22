@@ -205,6 +205,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   const openDashboardBtn = document.getElementById('openDashboardBtn');
   if (openDashboardBtn) openDashboardBtn.addEventListener('click', () => chrome.tabs.create({ url: `${APP}/dashboard` }));
 
+  const statusEl = document.getElementById('agenticStatus');
+  const showStatus = (msg) => {
+    if (!statusEl) return;
+    statusEl.textContent = msg;
+    statusEl.style.display = 'block';
+    setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
+  };
+
+  const dsaBtn = document.getElementById('switchContextDsaBtn');
+  if (dsaBtn) {
+    dsaBtn.addEventListener('click', async () => {
+      dsaBtn.disabled = true;
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'switchContext', contextType: 'dsa' });
+        if (res?.snippet) navigator.clipboard.writeText(res.snippet);
+        showStatus(`🎯 DSA Environment Staged & Template Copied!`);
+      } catch (e) { showStatus('⚠️ Switch failed'); }
+      finally { dsaBtn.disabled = false; }
+    });
+  }
+
+  const stashBtn = document.getElementById('stashTabsBtn');
+  if (stashBtn) {
+    stashBtn.addEventListener('click', async () => {
+      stashBtn.disabled = true;
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'stashIdleTabs' });
+        showStatus(`🧹 Stashed ${res?.count || 0} idle tabs safely!`);
+      } catch (e) { showStatus('⚠️ Stash failed'); }
+      finally { stashBtn.disabled = false; }
+    });
+  }
+
+  const snapshotBtn = document.getElementById('saveSnapshotBtn');
+  if (snapshotBtn) {
+    snapshotBtn.addEventListener('click', async () => {
+      snapshotBtn.disabled = true;
+      try {
+        const res = await chrome.runtime.sendMessage({ action: 'createSessionSnapshot', tag: 'Focus Sprint' });
+        showStatus(`📸 Snapshot saved (${res?.snapshotCount || 0} tabs)!`);
+      } catch (e) { showStatus('⚠️ Snapshot failed'); }
+      finally { snapshotBtn.disabled = false; }
+    });
+  }
+
   const disconnectBtn = document.getElementById('disconnectBtn');
   if (disconnectBtn) {
     disconnectBtn.addEventListener('click', async () => {

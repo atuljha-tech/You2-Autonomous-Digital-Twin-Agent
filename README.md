@@ -377,8 +377,25 @@ Most tools react.
 **You² anticipates.**
 
 Most tools are generic.  
+---
 
-**You² is personalized intelligence.**
+# 🤖 Agentic Autonomous Extensions
+
+You² includes lightweight, non-intrusive agentic capabilities in the extension:
+
+1. **One-Click Context Switcher & Auto-Prep**:
+   - Stages workspace environment instantly (opens LeetCode + Notion in an organized browser Tab Group).
+   - Mutes noise tabs (Gmail, Discord, YouTube).
+   - Pre-loads starter boilerplates or code snippets into your system clipboard.
+
+2. **Smart Friction Creator (Micro-Obstacles)**:
+   - Actively disrupts mindless dopamine scrolling on distracting sites.
+   - **Typing Verification**: Requires manual typing of a daily sacrifice statement (*"I am sacrificing 30 minutes of project work right now"*).
+   - **Micro-Quiz Gatekeeper**: Asks a quick mental math question before unlocking entertainment tabs.
+
+3. **Auto-Save & Clean Up Agent**:
+   - **Tab Stash**: Safely archives idle tabs into local storage to free browser RAM.
+   - **Session Snapshots**: Captures research tab states under a tagged project session (*e.g., "DSA Sprint"*) for quick retrieval.
 
 ---
 

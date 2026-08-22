@@ -6,9 +6,11 @@
 
   "permissions": [
     "tabs",
+    "tabGroups",
     "activeTab",
     "storage",
-    "alarms"
+    "alarms",
+    "clipboardWrite"
   ],
 
   "host_permissions": [
